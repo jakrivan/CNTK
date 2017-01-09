@@ -52,7 +52,7 @@ def create_reader(map_file, mean_file, train, total_number_of_samples, distribut
         distributed_after = distributed_after)
 
 # Train and evaluate the network.
-def convnet_cifar10_dataaug(create_train_reader, test_reader, create_dist_learner, max_epochs=80, log_to_file=None, num_mbs_per_log=None, gen_heartbeat=False):
+def convnet_cifar10_dataaug(create_train_reader, test_reader, create_dist_learner, max_epochs=2, log_to_file=None, num_mbs_per_log=None, gen_heartbeat=False):
     _cntk_py.set_computation_network_trace_level(0)
 
     # Input variables denoting the features and label data
@@ -119,16 +119,19 @@ def convnet_cifar10_dataaug(create_train_reader, test_reader, create_dist_learne
     updated=True
     epoch=0
     
-    while updated:
-        data = train_reader.next_minibatch(minibatch_size, input_map=input_map)   # fetch minibatch.
-        updated = trainer.train_minibatch(data)                                   # update model with it
-        progress_printer.update_with_trainer(trainer, with_metric=True)           # log progress
-        current_epoch = int(trainer.total_number_of_samples_seen/epoch_size)
-        
-        if epoch != current_epoch:
-            progress_printer.epoch_summary(with_metric=True)
-            epoch = current_epoch
-            trainer.save_checkpoint(os.path.join(model_path, "ConvNet_CIFAR10_DataAug_{}.dnn".format(epoch)))
+    session = cntk.training_session(train_reader, trainer, cntk.minibatch_size_schedule(minibatch_size), input_map)
+    session.run()
+    
+    #while updated:
+    #    data = train_reader.next_minibatch(minibatch_size, input_map=input_map)   # fetch minibatch.
+    #    updated = trainer.train_minibatch(data)                                   # update model with it
+    #    progress_printer.update_with_trainer(trainer, with_metric=True)           # log progress
+    #    current_epoch = int(trainer.total_number_of_samples_seen/epoch_size)
+    #    
+    #    if epoch != current_epoch:
+    #        progress_printer.epoch_summary(with_metric=True)
+    #        epoch = current_epoch
+    #        trainer.save_checkpoint(os.path.join(model_path, "ConvNet_CIFAR10_DataAug_{}.dnn".format(epoch)))
 
     ### Evaluation action
     minibatch_size = 16

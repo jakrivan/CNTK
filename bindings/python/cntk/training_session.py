@@ -96,4 +96,4 @@ def training_session(training_minibatch_source,
     Returns:
         Instance of a :class:`TrainingSession`
     '''
-    return cntk_py.basic_training_session(training_minibatch_source, trainer, model_inputs_to_mb_source_mapping, minibatch_size_schedule, checkpoint_frequency, checkpoint_filename)
+    return cntk_py.create_basic_training_session(training_minibatch_source, trainer, model_inputs_to_mb_source_mapping, minibatch_size_schedule, checkpoint_frequency, checkpoint_filename)
