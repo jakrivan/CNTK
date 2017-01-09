@@ -30,6 +30,6 @@ def download_model_by_name(model_name):
         download_model(model_file_name, 'https://www.cntk.ai/Models/AlexNet/AlexNetBS.model')
     elif model_name == 'ResNet_18':
         # TODO: store new ResNet models in cntk.ai/Models/ResNet for consistency
-        download_model(model_file_name, 'https://www.cntk.ai/Models/ResNet/ResNet_18.model')
+        download_model(model_file_name, 'https://www.cntk.ai/ResNet/ResNet_18.model')
     else:
-        print("WARNING: Unknown model name '%s'." % model_name)
+        print("ERROR: Unknown model name '%s'." % model_name)

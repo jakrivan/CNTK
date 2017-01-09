@@ -37,7 +37,8 @@ def create_mb_source(image_height, image_width, num_channels, map_file):
     transforms = [ImageDeserializer.scale(width=image_width, height=image_height, channels=num_channels, interpolations='linear')]
     return MinibatchSource(ImageDeserializer(map_file, StreamDefs(
         features=StreamDef(field='image', transforms=transforms),  # first column in map file is referred to as 'image'
-        labels=StreamDef(field='label', shape=1000))))             # and second as 'label'. TODO: add option to ignore labels
+        labels=StreamDef(field='label', shape=1000))),             # and second as 'label'. TODO: add option to ignore labels
+        randomize=False)
 
 
 def eval_and_write(model_file, node_name, output_file, minibatch_source, num_objects):
