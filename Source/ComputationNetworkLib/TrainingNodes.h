@@ -2516,6 +2516,13 @@ public:
             m_dScale->Resize(scale); // gradients for scale and bias get stored here
             m_dBias->Resize(bias);
 
+            // cuDnn does not prevent NaN propagation so set the values to zero
+            if (!m_useCntkEngine)
+            {
+                m_dScale->SetValue((ElemType)0);
+                m_dBias->SetValue((ElemType)0);
+            }
+
             double blendFactor = ComputeBlendFactor();  // interpolation weight for the running statistics (the current MB statistics are weighted with 1-this)
 
             // Compute all derivatives in one step. Save derivatives with respect to scale and bias in temp matrices.
@@ -2631,6 +2638,25 @@ public:
                     "Please specify imageLayout=\"cudnn\" in BatchNormalization node in your NDL/BrainScript "
                     "and make sure your input data layout is CHW", NodeName().c_str(), OperationName().c_str());
             }
+
+            if (!m_useCntkEngine)
+            {
+                // Fallback to cntk engine on CPU device if cuDnn is not available,
+                bool cpuDevice = (m_deviceId == CPUDEVICE);
+
+                // or if parameters cannot be handled by cuDnn (which is needed for compatibility when changing the default to cudnn)
+                // In Source/Math/CuDnnBatchNormalization.cu :
+                //   if (blendFactor != 0 && (blendFactor != 1 || expAvgFactor > 0))
+                //      InvalidArgument("cuDNN batch normalization engine currently supports blendTimeConstant of 0 or 1 only.");
+                // Check ComputeBlendFactor()/ComputeExpAvgFactor() for inferring blendFactor/expAvgFactor from m_blendTimeConst/m_normTimeConst
+                bool cuDnnUnsupportedParams = (m_blendTimeConst != 0 && (isfinite(m_blendTimeConst) || isfinite(m_normTimeConst)));
+
+                if (cpuDevice || cuDnnUnsupportedParams)
+                {
+                    m_useCntkEngine = true;
+                }
+            }
+
             double cudnnMinEps = 1e-5; // CUDNN_BN_MIN_EPSILON
             if (!m_useCntkEngine && m_epsilon < cudnnMinEps) 
                 fprintf(stderr, "\nWARNING: cuDNN batch normalization requires epsilon >= %e. Epsilon will be reset to that value.\n", cudnnMinEps);
